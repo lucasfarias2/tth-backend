@@ -16,7 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from api.views import GoalListCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/goal/', GoalListCreateView.as_view(), name='goal-list-create'),
 ]
