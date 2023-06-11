@@ -16,9 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from api.views import GoalListCreateView
+from api.views import GoalListCreateView, ObjectiveListCreateView, TaskListCreateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/goal/', GoalListCreateView.as_view(), name='goal-list-create'),
+    path('api/objectives/', ObjectiveListCreateView.as_view(), name='objective-list-create'),
+    path('api/tasks/', TaskListCreateView.as_view(), name='task-list-create'),
 ]
