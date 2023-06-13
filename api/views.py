@@ -7,10 +7,22 @@ class GoalListCreateView(generics.ListCreateAPIView):
     queryset = Goal.objects.all()
     serializer_class = GoalSerializer
 
+class GoalDestroyView(generics.DestroyAPIView):
+    queryset = Goal.objects.all()
+    serializer_class = GoalSerializer
+
 class ObjectiveListCreateView(generics.ListCreateAPIView):
     queryset = Objective.objects.all()
     serializer_class = ObjectiveSerializer
 
+class ObjectiveDestroyView(generics.DestroyAPIView):
+    queryset = Objective.objects.all()
+    serializer_class = ObjectiveSerializer
+
 class TaskListCreateView(generics.ListCreateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+class TaskDestroyView(generics.DestroyAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer

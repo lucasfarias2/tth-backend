@@ -34,8 +34,22 @@ class Objective(models.Model):
 
 
 class Goal(models.Model):
+    COLOR_CHOICES = (
+        ("blue", "Blue"),
+        ("red", "Red"),
+        ("green", "Green"),
+        ("yellow", "Yellow"),
+        ("purple", "Purple"),
+        ("orange", "Orange"),
+        ("pink", "Pink"),
+        ("gray", "Gray"),
+        ("brown", "Brown"),
+        ("black", "Black"),
+    )
+
     name = models.CharField(max_length=255)
     year = models.PositiveIntegerField()
+    color = models.CharField(max_length=50, choices=COLOR_CHOICES, default='indianred')
 
     def __str__(self):
         return self.name

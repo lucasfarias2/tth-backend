@@ -1,26 +1,17 @@
-"""
-URL configuration for app project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
-from api.views import GoalListCreateView, ObjectiveListCreateView, TaskListCreateView
+from api.views import (
+    GoalListCreateView, GoalDestroyView,
+    ObjectiveListCreateView, ObjectiveDestroyView,
+    TaskListCreateView, TaskDestroyView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/goal/', GoalListCreateView.as_view(), name='goal-list-create'),
+    path('api/goals/', GoalListCreateView.as_view(), name='goal-list-create'),
+    path('api/goals/<int:pk>/', GoalDestroyView.as_view(), name='goal-destroy'),
     path('api/objectives/', ObjectiveListCreateView.as_view(), name='objective-list-create'),
+    path('api/objectives/<int:pk>/', ObjectiveDestroyView.as_view(), name='objective-destroy'),
     path('api/tasks/', TaskListCreateView.as_view(), name='task-list-create'),
+    path('api/tasks/<int:pk>/', TaskDestroyView.as_view(), name='task-destroy'),
 ]
