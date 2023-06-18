@@ -1,5 +1,5 @@
-from django.db import models
 import datetime
+from django.db import models
 
 
 class Task(models.Model):
@@ -53,3 +53,4 @@ class Goal(models.Model):
 
     def __str__(self):
         return self.name
+    
