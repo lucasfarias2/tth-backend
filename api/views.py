@@ -133,8 +133,13 @@ class CurrentUserView(APIView):
 
         data = {
             "id": user.id,
-            "username": user.username,
             "email": user.email,
+            "is_staff": user.is_staff,
+            "is_superuser": user.is_superuser,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "date_joined": user.date_joined,
+            "last_login": user.last_login,
         }
         
         return Response(data)

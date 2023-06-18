@@ -9,9 +9,9 @@ from api.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/register/', RegisterView.as_view(), name='register'),
-    path('auth/login/', LoginView.as_view(), name='login'),
-    path('auth/user/', CurrentUserView.as_view(), name='current-user'),
+    path('api/auth/register/', RegisterView.as_view(), name='register'),
+    path('api/auth/login/', LoginView.as_view(), name='login'),
+    path('api/auth/user/', CurrentUserView.as_view(), name='current-user'),
     path('api/goals/', GoalListCreateView.as_view(), name='goal-list-create'),
     path('api/goals/<int:pk>/', GoalRetrieveUpdateDestroyView.as_view(), name='goal-detail'),
     path('api/objectives/', ObjectiveListCreateView.as_view(), name='objective-list-create'),
