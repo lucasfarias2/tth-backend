@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.urls import path
 from api.views import (
-    GoalListCreateView, GoalDestroyView,
-    ObjectiveListCreateView, ObjectiveDestroyView,
-    TaskListCreateView, TaskDestroyView, RegisterView, LoginView, CurrentUserView
+    GoalListCreateView, ObjectiveListCreateView, HabitListCreateView, 
+    GoalRetrieveUpdateDestroyView, ObjectiveRetrieveUpdateDestroyView, HabitRetrieveUpdateDestroyView,
+    RegisterView, LoginView, CurrentUserView, EffortLogListCreateView, EffortLogRetrieveUpdateDestroyView
 )
 
 urlpatterns = [
@@ -12,9 +12,11 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/user/', CurrentUserView.as_view(), name='current-user'),
     path('api/goals/', GoalListCreateView.as_view(), name='goal-list-create'),
-    path('api/goals/<int:pk>/', GoalDestroyView.as_view(), name='goal-destroy'),
+    path('api/goals/<int:pk>/', GoalRetrieveUpdateDestroyView.as_view(), name='goal-detail'),
     path('api/objectives/', ObjectiveListCreateView.as_view(), name='objective-list-create'),
-    path('api/objectives/<int:pk>/', ObjectiveDestroyView.as_view(), name='objective-destroy'),
-    path('api/tasks/', TaskListCreateView.as_view(), name='task-list-create'),
-    path('api/tasks/<int:pk>/', TaskDestroyView.as_view(), name='task-destroy'),
+    path('api/objectives/<int:pk>/', ObjectiveRetrieveUpdateDestroyView.as_view(), name='objective-detail'),
+    path('api/habits/', HabitListCreateView.as_view(), name='habit-list-create'),
+    path('api/habits/<int:pk>/', HabitRetrieveUpdateDestroyView.as_view(), name='habit-detail'),
+    path('api/effortlogs/', EffortLogListCreateView.as_view(), name='effortlog-list-create'),
+    path('api/effortlogs/<int:pk>/', EffortLogRetrieveUpdateDestroyView.as_view(), name='effortlog-detail'),
 ]

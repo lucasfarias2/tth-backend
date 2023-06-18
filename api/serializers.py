@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Goal, Objective, Task
+from .models import Goal, Objective, Habit, EffortLog
 
 User = get_user_model()
 
@@ -18,17 +18,40 @@ class GoalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Goal
         fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
 
 class ObjectiveSerializer(serializers.ModelSerializer):
-    goal = GoalSerializer()  # Include the GoalSerializer nested within the ObjectiveSerializer
+    goal = serializers.PrimaryKeyRelatedField(queryset=Goal.objects.all())
 
     class Meta:
         model = Objective
         fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
 
-class TaskSerializer(serializers.ModelSerializer):
-    objective = ObjectiveSerializer()  # Include the ObjectiveSerializer nested within the TaskSerializer
+    def to_representation(self, instance):
+        self.fields['goal'] = GoalSerializer()
+        return super(ObjectiveSerializer, self).to_representation(instance)
+
+class HabitSerializer(serializers.ModelSerializer):
+    objective = serializers.PrimaryKeyRelatedField(queryset=Objective.objects.all())
     
     class Meta:
-        model = Task
+        model = Habit
         fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
+    
+    def to_representation(self, instance):
+        self.fields['objective'] = ObjectiveSerializer()
+        return super(HabitSerializer, self).to_representation(instance)
+
+class EffortLogSerializer(serializers.ModelSerializer):
+    habit = serializers.PrimaryKeyRelatedField(queryset=Habit.objects.all())
+
+    class Meta:
+        model = EffortLog
+        fields = '__all__'
+        extra_kwargs = {'user': {'read_only': True}}
+    
+    def to_representation(self, instance):
+        self.fields['habit'] = HabitSerializer()
+        return super(EffortLogSerializer, self).to_representation(instance)
