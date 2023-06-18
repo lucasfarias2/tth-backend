@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
 from .auth import BearerTokenAuthentication
 from .models import Goal, Objective, Habit, EffortLog
 from .serializers import GoalSerializer, ObjectiveSerializer, HabitSerializer, EffortLogSerializer, UserSerializer
@@ -74,6 +75,15 @@ class EffortLogListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return EffortLog.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        habit = request.data.get('habit')
+        week = request.data.get('week')
+
+        if EffortLog.objects.filter(habit=habit, week=week, user=request.user).exists():
+            raise ValidationError("Effort already set for that week and habit.")
+
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
