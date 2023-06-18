@@ -133,3 +133,5 @@ CORS_ALLOW_ALL_ORIGINS = True
 #     "http://192.168.178.31:8000",
 #     # add any other origins that you want to allow here
 # ]
+
+AUTH_USER_MODEL = 'api.CustomUser'

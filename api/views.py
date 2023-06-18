@@ -1,9 +1,12 @@
+from datetime import date
+from rest_framework.views import APIView
 from django.contrib.auth import get_user_model, authenticate
+from django.db.models import Sum
+from django.http import Http404
 from rest_framework import generics, status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError
 from .auth import BearerTokenAuthentication
 from .models import Goal, Objective, Habit, EffortLog
@@ -111,9 +114,9 @@ class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        username = request.data.get("username")
+        email = request.data.get("email")
         password = request.data.get("password")
-        user = authenticate(username=username, password=password)
+        user = authenticate(email=email, password=password)
 
         if user:
             token, _ = Token.objects.get_or_create(user=user)
@@ -135,3 +138,36 @@ class CurrentUserView(APIView):
         }
         
         return Response(data)
+
+class GoalWeeklyStatisticsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, week):
+        goals = Goal.objects.filter(user=request.user)
+        statistics = []
+
+        for goal in goals:
+            total_effort = EffortLog.objects.filter(habit__objective__goal=goal, week=week).aggregate(Sum('level')).get('level__sum', 0)
+            total_points = EffortLog.objects.filter(habit__objective__goal=goal, week=week).aggregate(Sum('level')).get('level__sum', 0)
+
+            if total_effort is None:
+                total_effort = 0
+
+            total_percentage = (total_effort / goal.total_effort_all_goals()) * 100 if goal.total_effort_all_goals() != 0 else 0.0
+
+            statistics.append({
+                'id': goal.id,
+                'name': goal.name,
+                'total_percentage': total_percentage,
+                'total_points': total_points if total_points is not None else 0
+            })
+
+        total_effort_points = EffortLog.objects.filter(week=week).aggregate(Sum('level')).get('level__sum', 0)
+
+        data = {
+            'total_effort_points': total_effort_points if total_effort_points is not None else 0,
+            'goals': statistics
+        }
+
+        return Response(data)
+

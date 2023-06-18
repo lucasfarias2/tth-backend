@@ -3,7 +3,8 @@ from django.urls import path
 from api.views import (
     GoalListCreateView, ObjectiveListCreateView, HabitListCreateView, 
     GoalRetrieveUpdateDestroyView, ObjectiveRetrieveUpdateDestroyView, HabitRetrieveUpdateDestroyView,
-    RegisterView, LoginView, CurrentUserView, EffortLogListCreateView, EffortLogRetrieveUpdateDestroyView
+    RegisterView, LoginView, CurrentUserView, EffortLogListCreateView, EffortLogRetrieveUpdateDestroyView,
+    GoalWeeklyStatisticsView
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
     path('api/habits/<int:pk>/', HabitRetrieveUpdateDestroyView.as_view(), name='habit-detail'),
     path('api/effortlogs/', EffortLogListCreateView.as_view(), name='effortlog-list-create'),
     path('api/effortlogs/<int:pk>/', EffortLogRetrieveUpdateDestroyView.as_view(), name='effortlog-detail'),
+    path('api/statistics/week/<int:week>/', GoalWeeklyStatisticsView.as_view(), name='goal-weekly-statistics'),
 ]
