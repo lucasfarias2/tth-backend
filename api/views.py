@@ -1,6 +1,6 @@
-from datetime import date
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model, authenticate
+from django.db.models import F
 from rest_framework import generics, status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -18,7 +18,7 @@ class HabitListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Habit.objects.filter(user=self.request.user)
+        return Habit.objects.filter(user=self.request.user).order_by('starting_week', F('expected_effort').desc())
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

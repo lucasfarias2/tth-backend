@@ -6,7 +6,9 @@ from django.conf import settings
 class Habit(models.Model):
     name = models.CharField(max_length=255)
     starting_week = models.PositiveIntegerField(default=datetime.date.today().isocalendar()[1])
+    expected_effort = models.IntegerField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    color = models.CharField(max_length=255, default="rose")
 
     def __str__(self):
         return f"{self.name} - From: week {self.starting_week}"
