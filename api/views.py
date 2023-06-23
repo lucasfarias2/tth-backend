@@ -59,6 +59,15 @@ class EffortLogRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return EffortLog.objects.filter(user=self.request.user)
 
+class EffortLogListByWeekView(generics.ListAPIView):
+    serializer_class = EffortLogSerializer
+    authentication_classes = [BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        week = self.kwargs['week']
+        return EffortLog.objects.filter(week=week, user=self.request.user)
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
