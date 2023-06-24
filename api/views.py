@@ -1,7 +1,7 @@
 import datetime
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model, authenticate
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum
 from rest_framework import generics, status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -133,3 +133,104 @@ class LogoutView(APIView):
     def post(self, request):
         request.user.auth_token.delete()
         return Response(status=204)
+
+class EffortCompletionView(APIView):
+    authentication_classes = [BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        week = self.kwargs['week']
+        user = request.user
+
+        # Get the total expected effort for the week
+        total_expected_effort = Habit.objects.filter(user=user, starting_week__lte=week).aggregate(Sum('expected_effort'))['expected_effort__sum'] or 0
+
+        # Get the total actual effort for the week
+        total_actual_effort = Effort.objects.filter(user=user, week=week).aggregate(Sum('level'))['level__sum'] or 0
+
+        # Calculate the completion percentage
+        if total_expected_effort > 0:
+            completion_percentage = (total_actual_effort / total_expected_effort) * 100
+        else:
+            completion_percentage = 0
+
+        return Response({'completion_percentage': completion_percentage})
+
+class HabitPerformanceView(generics.ListAPIView):
+    serializer_class = EffortSerializer
+    authentication_classes = [BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        habit_id = self.kwargs['habit_id']
+        return Effort.objects.filter(habit_id=habit_id, user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        habit = Habit.objects.get(id=self.kwargs['habit_id'], user=request.user)
+
+        performance_data = []
+        total_performance_percentage = 0
+        for effort in queryset:
+            expected_effort = habit.expected_effort
+            actual_effort = effort.level
+
+            # Calculate the performance percentage for the week
+            if expected_effort > 0:
+                performance_percentage = (actual_effort / expected_effort) * 100
+            else:
+                performance_percentage = 0
+
+            total_performance_percentage += performance_percentage
+
+            performance_data.append({
+                'week': effort.week,
+                'performance_percentage': performance_percentage
+            })
+
+        if queryset.count() > 0:
+            average_performance_percentage = total_performance_percentage / queryset.count()
+        else:
+            average_performance_percentage = 0
+
+        return Response({
+            'performance_data': performance_data, 
+            'average_performance_percentage': average_performance_percentage
+        })
+
+class YearlyHabitPerformanceView(APIView):
+    authentication_classes = [BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current_week = datetime.date.today().isocalendar()[1]
+        current_year = datetime.date.today().year
+        habits = Habit.objects.filter(user=request.user, year=current_year)
+
+        response = []
+        
+        for habit in habits:
+            total_expected_effort = 0
+            total_effort = 0
+            
+            for week in range(1, current_week + 1):
+                expected_effort = habit.expected_effort if week >= habit.starting_week else 0
+                total_expected_effort += expected_effort
+
+                try:
+                    effort = Effort.objects.get(habit=habit, week=week, year=current_year, user=request.user)
+                    total_effort += effort.level
+                except Effort.DoesNotExist:
+                    pass
+                
+            if total_expected_effort > 0:
+                performance_percentage = (total_effort / total_expected_effort) * 100
+            else:
+                performance_percentage = 0
+
+            response.append({
+                "habit": habit.name,
+                "performance_percentage": performance_percentage
+            })
+        
+        return Response(response)
