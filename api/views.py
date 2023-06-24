@@ -20,7 +20,15 @@ class HabitListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         year = self.request.query_params.get('year', datetime.date.today().year)
-        return Habit.objects.filter(Q(year=year) & Q(user=self.request.user)).order_by('starting_week', F('expected_effort').desc())
+        week = self.request.query_params.get('week', None)
+        
+        query = Q(year=year) & Q(user=self.request.user)
+
+        if week is not None:
+            week = int(week)
+            query &= Q(starting_week__lte=week)
+
+        return Habit.objects.filter(query).order_by('starting_week', F('expected_effort').desc())
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -79,8 +87,10 @@ class RegisterView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
-        token, _ = Token.objects.get_or_create(user=User.objects.get(username=request.data['username']))
+        token, _ = Token.objects.get_or_create(user=User.objects.get(email=request.data['email']))
         response.data['token'] = token.key
+        response.data['first_name'] = request.data['first_name']
+        response.data['last_name'] = request.data['last_name']
         return response
 
 class LoginView(APIView):
