@@ -116,3 +116,10 @@ class CurrentUserView(APIView):
         }
         
         return Response(data)
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        request.user.auth_token.delete()
+        return Response(status=204)
