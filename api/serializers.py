@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Habit, EffortLog, CustomUser
+from .models import Habit, Effort, CustomUser
 
 User = get_user_model()
 
@@ -20,14 +20,14 @@ class HabitSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'user': {'read_only': True}}
 
-class EffortLogSerializer(serializers.ModelSerializer):
+class EffortSerializer(serializers.ModelSerializer):
     habit = serializers.PrimaryKeyRelatedField(queryset=Habit.objects.all())
 
     class Meta:
-        model = EffortLog
+        model = Effort
         fields = '__all__'
         extra_kwargs = {'user': {'read_only': True}}
     
     def to_representation(self, instance):
         self.fields['habit'] = HabitSerializer()
-        return super(EffortLogSerializer, self).to_representation(instance)
+        return super(EffortSerializer, self).to_representation(instance)

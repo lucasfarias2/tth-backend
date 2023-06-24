@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.urls import path
 from api.views import (
     HabitListCreateView, HabitRetrieveUpdateDestroyView, 
-    RegisterView, LoginView, CurrentUserView, EffortLogListCreateView, 
-    EffortLogRetrieveUpdateDestroyView, EffortLogListByWeekView
+    RegisterView, LoginView, CurrentUserView, EffortListCreateView, 
+    EffortRetrieveUpdateDestroyView, EffortListByWeekView
 )
 
 urlpatterns = [
@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/auth/user/', CurrentUserView.as_view(), name='current-user'),
     path('api/habits/', HabitListCreateView.as_view(), name='habit-list-create'),
     path('api/habits/<int:pk>/', HabitRetrieveUpdateDestroyView.as_view(), name='habit-detail'),
-    path('api/effortlogs/', EffortLogListCreateView.as_view(), name='effortlog-list-create'),
-    path('api/effortlogs/<int:pk>/', EffortLogRetrieveUpdateDestroyView.as_view(), name='effortlog-detail'),
-    path('api/effortlogs/week/<int:week>/', EffortLogListByWeekView.as_view()),
+    path('api/efforts/', EffortListCreateView.as_view(), name='effort-list-create'),
+    path('api/efforts/<int:pk>/', EffortRetrieveUpdateDestroyView.as_view(), name='effort-detail'),
+    path('api/efforts/week/<int:week>/', EffortListByWeekView.as_view()),
 ]

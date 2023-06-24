@@ -1,14 +1,15 @@
+import datetime
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model, authenticate
-from django.db.models import F
+from django.db.models import F, Q
 from rest_framework import generics, status, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from .auth import BearerTokenAuthentication
-from .models import Habit, EffortLog
-from .serializers import HabitSerializer, EffortLogSerializer, UserSerializer
+from .models import Habit, Effort
+from .serializers import HabitSerializer, EffortSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -18,7 +19,8 @@ class HabitListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Habit.objects.filter(user=self.request.user).order_by('starting_week', F('expected_effort').desc())
+        year = self.request.query_params.get('year', datetime.date.today().year)
+        return Habit.objects.filter(Q(year=year) & Q(user=self.request.user)).order_by('starting_week', F('expected_effort').desc())
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -31,19 +33,20 @@ class HabitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
     
-class EffortLogListCreateView(generics.ListCreateAPIView):
-    serializer_class = EffortLogSerializer
+class EffortListCreateView(generics.ListCreateAPIView):
+    serializer_class = EffortSerializer
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return EffortLog.objects.filter(user=self.request.user)
+        year = self.request.query_params.get('year', datetime.date.today().year)
+        return Effort.objects.filter(Q(year=year) & Q(user=self.request.user))
 
     def create(self, request, *args, **kwargs):
         habit = request.data.get('habit')
         week = request.data.get('week')
 
-        if EffortLog.objects.filter(habit=habit, week=week, user=request.user).exists():
+        if Effort.objects.filter(habit=habit, week=week, user=request.user).exists():
             raise ValidationError("Effort already set for that week and habit.")
 
         return super().create(request, *args, **kwargs)
@@ -51,22 +54,23 @@ class EffortLogListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class EffortLogRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = EffortLogSerializer
+class EffortRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = EffortSerializer
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return EffortLog.objects.filter(user=self.request.user)
+        return Effort.objects.filter(user=self.request.user)
 
-class EffortLogListByWeekView(generics.ListAPIView):
-    serializer_class = EffortLogSerializer
+class EffortListByWeekView(generics.ListAPIView):
+    serializer_class = EffortSerializer
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         week = self.kwargs['week']
-        return EffortLog.objects.filter(week=week, user=self.request.user)
+        year = self.request.query_params.get('year', datetime.date.today().year)
+        return Effort.objects.filter(Q(week=week) & Q(year=year) & Q(user=self.request.user))
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()

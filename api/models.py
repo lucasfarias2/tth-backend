@@ -9,15 +9,17 @@ class Habit(models.Model):
     expected_effort = models.IntegerField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     color = models.CharField(max_length=255, default="rose")
+    year = models.PositiveIntegerField(default=datetime.date.today().year)
 
     def __str__(self):
         return f"{self.name} - From: week {self.starting_week}"
 
-class EffortLog(models.Model):
+class Effort(models.Model):
     habit = models.ForeignKey(Habit, on_delete=models.CASCADE)
     week = models.PositiveIntegerField(default=datetime.date.today().isocalendar()[1])
     level = models.IntegerField()
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    year = models.PositiveIntegerField(default=datetime.date.today().year)
 
     def __str__(self):
         return f"Habit: {self.habit.name} - Week: {self.week} - Level: {self.level}"
