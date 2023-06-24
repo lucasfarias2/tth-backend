@@ -198,39 +198,75 @@ class HabitPerformanceView(generics.ListAPIView):
             'average_performance_percentage': average_performance_percentage
         })
 
-class YearlyHabitPerformanceView(APIView):
+class YearlyHabitPerformanceView(generics.ListAPIView):
+    serializer_class = HabitSerializer
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         current_week = datetime.date.today().isocalendar()[1]
-        current_year = datetime.date.today().year
-        habits = Habit.objects.filter(user=request.user, year=current_year)
+        habits = Habit.objects.filter(user=self.request.user, starting_week__lte=current_week)
+        habit_performance = []
+
+        total_effort_points = 0
+        for habit in habits:
+            effort_points = Effort.objects.filter(habit=habit, week__lte=current_week).aggregate(Sum('level'))['level__sum'] or 0
+            total_effort_points += effort_points
+
+        for habit in habits:
+            habit_effort_points = Effort.objects.filter(habit=habit, week__lte=current_week).aggregate(Sum('level'))['level__sum'] or 0
+            weeks_since_start = current_week - habit.starting_week + 1
+            performance_percentage = 0
+            if habit.expected_effort > 0:
+                performance_percentage = (habit_effort_points / (habit.expected_effort * weeks_since_start)) * 100
+            contribution_percentage = 0
+            if total_effort_points > 0:
+                contribution_percentage = (habit_effort_points / total_effort_points) * 100
+
+            habit_performance.append({
+                'habit': HabitSerializer(habit).data,
+                'performance_percentage': round(performance_percentage, 2),
+                'contribution_percentage': round(contribution_percentage, 2),
+            })
+
+        return Response(habit_performance)
+    
+class RecentCompletionsView(APIView):
+    authentication_classes = [BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_completion_percentage(self, user, week):
+        # Get the total expected effort for the week
+        total_expected_effort = Habit.objects.filter(user=user, starting_week__lte=week).aggregate(Sum('expected_effort'))['expected_effort__sum'] or 0
+
+        # Get the total actual effort for the week
+        total_actual_effort = Effort.objects.filter(user=user, week=week).aggregate(Sum('level'))['level__sum'] or 0
+
+        # Calculate the completion percentage
+        if total_expected_effort > 0:
+            return (total_actual_effort / total_expected_effort) * 100
+        else:
+            return 0
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        current_week = datetime.date.today().isocalendar()[1]
 
         response = []
-        
-        for habit in habits:
-            total_expected_effort = 0
-            total_effort = 0
-            
-            for week in range(1, current_week + 1):
-                expected_effort = habit.expected_effort if week >= habit.starting_week else 0
-                total_expected_effort += expected_effort
 
-                try:
-                    effort = Effort.objects.get(habit=habit, week=week, year=current_year, user=request.user)
-                    total_effort += effort.level
-                except Effort.DoesNotExist:
-                    pass
-                
-            if total_expected_effort > 0:
-                performance_percentage = (total_effort / total_expected_effort) * 100
+        # Calculate completion percentages and differences for the current week and the 2 previous weeks
+        for i, week in enumerate(range(current_week - 2, current_week + 1)):
+            completion_percentage = self.get_completion_percentage(user, week)
+
+            if i > 0:
+                difference = completion_percentage - response[i - 1]['completion_percentage']
             else:
-                performance_percentage = 0
+                difference = 0
 
             response.append({
-                "habit": habit.name,
-                "performance_percentage": performance_percentage
+                'week': week,
+                'completion_percentage': completion_percentage,
+                'difference': difference,
             })
-        
+
         return Response(response)

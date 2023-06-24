@@ -4,7 +4,7 @@ from api.views import (
     HabitListCreateView, HabitRetrieveUpdateDestroyView, 
     RegisterView, LoginView, CurrentUserView, EffortListCreateView, 
     EffortRetrieveUpdateDestroyView, EffortListByWeekView, LogoutView,
-    EffortCompletionView, HabitPerformanceView, YearlyHabitPerformanceView
+    EffortCompletionView, HabitPerformanceView, YearlyHabitPerformanceView, RecentCompletionsView
 )
 
 urlpatterns = [
@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/efforts/<int:pk>/', EffortRetrieveUpdateDestroyView.as_view(), name='effort-detail'),
     path('api/efforts/week/<int:week>/', EffortListByWeekView.as_view()),
     path('api/completion/<int:week>/', EffortCompletionView.as_view(), name='completion'),
+    path('api/completion/<int:week>/recent', RecentCompletionsView.as_view(), name='recent-completions'),
     path('api/performance/<int:habit_id>/', HabitPerformanceView.as_view(), name='performance'),
     path('api/performance/global/', YearlyHabitPerformanceView.as_view(), name='yearly-habit-performance'),
 ]
