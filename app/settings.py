@@ -20,7 +20,7 @@ if os.environ.get("ENV") == "production":
 else:
     DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.178.31', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['192.168.178.31', 'localhost', '127.0.0.1', '0.0.0.0', 'trackthehabit.com']
 
 # Application definition
 
