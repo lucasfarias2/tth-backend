@@ -142,19 +142,31 @@ class EffortCompletionView(APIView):
         week = self.kwargs['week']
         user = request.user
 
-        # Get the total expected effort for the week
-        total_expected_effort = Habit.objects.filter(user=user, starting_week__lte=week).aggregate(Sum('expected_effort'))['expected_effort__sum'] or 0
+        habits = Habit.objects.filter(user=user, starting_week__lte=week)
 
-        # Get the total actual effort for the week
-        total_actual_effort = Effort.objects.filter(user=user, week=week).aggregate(Sum('level'))['level__sum'] or 0
+        total_percentage = 0
 
-        # Calculate the completion percentage
-        if total_expected_effort > 0:
-            completion_percentage = (total_actual_effort / total_expected_effort) * 100
+        for habit in habits:
+            expected_effort = habit.expected_effort
+
+            # Get the total actual effort for the week for this habit
+            total_actual_effort = Effort.objects.filter(user=user, week=week, habit=habit).aggregate(Sum('level'))['level__sum'] or 0
+
+            # Calculate the completion percentage for this habit
+            if total_actual_effort >= expected_effort:
+                completion_percentage = 100
+            else:
+                completion_percentage = (total_actual_effort / expected_effort) * 100
+
+            total_percentage += completion_percentage
+
+        # Calculate the average completion percentage
+        if habits:
+            average_completion_percentage = total_percentage / len(habits)
         else:
-            completion_percentage = 0
+            average_completion_percentage = 0
 
-        return Response({'completion_percentage': completion_percentage})
+        return Response({'completion_percentage': average_completion_percentage})
 
 class HabitPerformanceView(generics.ListAPIView):
     serializer_class = EffortSerializer
