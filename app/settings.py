@@ -20,7 +20,7 @@ if os.environ.get("ENV") == "production":
 else:
     DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.178.31', 'localhost', '127.0.0.1', '0.0.0.0', 'trackthehabit.com']
+ALLOWED_HOSTS = ['192.168.178.31', 'localhost', '127.0.0.1', '0.0.0.0', 'trackthehabit.com', 'tth-backend-a9000f1ad086.herokuapp.com']
 
 # Application definition
 
