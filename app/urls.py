@@ -4,11 +4,13 @@ from api.views import (
     HabitListCreateView, HabitRetrieveUpdateDestroyView, 
     RegisterView, LoginView, CurrentUserView, EffortListCreateView, 
     EffortRetrieveUpdateDestroyView, EffortListByWeekView, LogoutView,
-    EffortCompletionView, HabitPerformanceView, YearlyHabitPerformanceView, RecentCompletionsView
+    EffortCompletionView, HabitPerformanceView, YearlyHabitPerformanceView, RecentCompletionsView,
+    SiteConfigView
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/site-config/', SiteConfigView.as_view()),
     path('api/auth/register/', RegisterView.as_view(), name='register'),
     path('api/auth/login/', LoginView.as_view(), name='login'),
     path('api/auth/user/', CurrentUserView.as_view(), name='current-user'),

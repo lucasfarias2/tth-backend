@@ -185,7 +185,7 @@ class HabitPerformanceView(generics.ListAPIView):
 
             performance_data.append({
                 'week': effort.week,
-                'performance_percentage': performance_percentage
+                'performance_percentage': round(performance_percentage, 2)
             })
 
         if queryset.count() > 0:
@@ -195,7 +195,7 @@ class HabitPerformanceView(generics.ListAPIView):
 
         return Response({
             'performance_data': performance_data, 
-            'average_performance_percentage': average_performance_percentage
+            'average_performance_percentage': round(average_performance_percentage, 2)
         })
 
 class YearlyHabitPerformanceView(generics.ListAPIView):
@@ -229,6 +229,9 @@ class YearlyHabitPerformanceView(generics.ListAPIView):
                 'contribution_percentage': round(contribution_percentage, 2),
             })
 
+        # Sort the habit_performance list by contribution_percentage in descending order
+        habit_performance = sorted(habit_performance, key=lambda k: k['contribution_percentage'], reverse=True)
+
         return Response(habit_performance)
     
 class RecentCompletionsView(APIView):
@@ -244,7 +247,7 @@ class RecentCompletionsView(APIView):
 
         # Calculate the completion percentage
         if total_expected_effort > 0:
-            return (total_actual_effort / total_expected_effort) * 100
+            return round((total_actual_effort / total_expected_effort) * 100, 2)
         else:
             return 0
 
@@ -254,12 +257,12 @@ class RecentCompletionsView(APIView):
 
         response = []
 
-        # Calculate completion percentages and differences for the current week and the 2 previous weeks
-        for i, week in enumerate(range(current_week - 2, current_week + 1)):
+        # Calculate completion percentages and differences for the current week and the 4 previous weeks
+        for i, week in enumerate(range(current_week - 4, current_week + 1)):
             completion_percentage = self.get_completion_percentage(user, week)
 
             if i > 0:
-                difference = completion_percentage - response[i - 1]['completion_percentage']
+                difference = round(completion_percentage - response[i - 1]['completion_percentage'], 2)
             else:
                 difference = 0
 
@@ -270,3 +273,19 @@ class RecentCompletionsView(APIView):
             })
 
         return Response(response)
+
+class SiteConfigView(APIView):
+    """
+    API endpoint that returns site-wide configuration data
+    """
+
+    def get(self, request, format=None):
+        # You can get the current week number using datetime.date.today().isocalendar()[1]
+        current_week = datetime.date.today().isocalendar()[1]
+
+        # Later, you can add more global variables here
+        data = {
+            "current_week": current_week,
+        }
+
+        return Response(data)
