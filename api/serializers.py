@@ -5,13 +5,41 @@ from .models import Habit, Effort, CustomUser
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    old_password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=True)
+
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'password', 'first_name', 'last_name')
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('email', 'old_password', 'password', 'first_name', 'last_name')
+
+    def validate(self, attrs):
+        user = self.instance
+        old_password = attrs.get('old_password')
+        
+        if not user.check_password(old_password):
+            raise serializers.ValidationError("Old password is not correct")
+        
+        return attrs
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
+        user = CustomUser(
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        old_password = validated_data.pop('old_password', None)
+        user = super().update(instance, validated_data)
+
+        if password and old_password:
+            user.set_password(password)
+            user.save()
+
         return user
 
 class HabitSerializer(serializers.ModelSerializer):

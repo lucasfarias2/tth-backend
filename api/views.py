@@ -301,3 +301,11 @@ class SiteConfigView(APIView):
         }
 
         return Response(data)
+
+class UserUpdateView(generics.UpdateAPIView):
+    serializer_class = UserSerializer
+    authentication_classes = [BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
