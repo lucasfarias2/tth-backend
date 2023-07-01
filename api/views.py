@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from .auth import BearerTokenAuthentication
 from .models import Habit, Effort
-from .serializers import HabitSerializer, EffortSerializer, UserSerializer
+from .serializers import HabitSerializer, EffortSerializer, UserSerializer, UserRegistrationSerializer
 
 User = get_user_model()
 
@@ -82,7 +82,7 @@ class EffortListByWeekView(generics.ListAPIView):
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
