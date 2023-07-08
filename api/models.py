@@ -96,3 +96,17 @@ class Announcement(models.Model):
 
     def __str__(self):
         return f"{self.title}"
+
+class Feature(models.Model):
+    STATUS_CHOICES = [
+        ('ontrack', 'On track'),
+        ('live', 'Live'),
+    ]
+
+    title = models.CharField(max_length=255)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ontrack')
+    creation_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title}"

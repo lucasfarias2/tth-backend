@@ -9,8 +9,9 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from .auth import BearerTokenAuthentication
-from .models import Habit, Effort, Ticket, Announcement
-from .serializers import HabitSerializer, EffortSerializer, UserSerializer, UserRegistrationSerializer, TicketSerializer, AnnouncementSerializer, UserListSerializer
+from .models import Habit, Effort, Ticket, Announcement, Feature
+from .serializers import (HabitSerializer, EffortSerializer, UserSerializer,
+                          UserRegistrationSerializer, TicketSerializer, AnnouncementSerializer, UserListSerializer, FeatureSerializer)
 
 User = get_user_model()
 
@@ -347,12 +348,12 @@ class TicketCreateView(generics.CreateAPIView):
 
 class TicketRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TicketSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
     queryset = Ticket.objects.all()
 
 class AnnouncementListCreateView(generics.ListCreateAPIView):
     serializer_class = AnnouncementSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
@@ -360,5 +361,37 @@ class AnnouncementListCreateView(generics.ListCreateAPIView):
 
 class AnnouncementRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnouncementSerializer
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
     queryset = Announcement.objects.all()
+
+class FeatureListCreateView(generics.ListCreateAPIView):
+    serializer_class = FeatureSerializer
+    permission_classes = [permissions.IsAdminUser]
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        return Feature.objects.all()
+
+class FeatureRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = FeatureSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Feature.objects.all()
+
+class UserTicketListView(generics.ListAPIView):
+    serializer_class = TicketSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Ensures only authenticated users can access this view
+
+    def get_queryset(self):
+        """
+        This view should return a list of all the tickets
+        for the currently authenticated user.
+        """
+        user = self.request.user
+        return Ticket.objects.filter(sender=user.email)
+    
+
+class PublicFeatureListView(generics.ListAPIView):
+    serializer_class = FeatureSerializer
+
+    def get_queryset(self):
+        return Feature.objects

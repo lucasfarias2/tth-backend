@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Habit, Effort, CustomUser, Ticket, Announcement
+from .models import Habit, Effort, CustomUser, Ticket, Announcement, Feature
 
 User = get_user_model()
 
@@ -84,6 +84,11 @@ class TicketSerializer(serializers.ModelSerializer):
 class AnnouncementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Announcement
+        fields = '__all__'
+
+class FeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feature
         fields = '__all__'
 
 class UserListSerializer(serializers.ModelSerializer):

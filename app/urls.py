@@ -6,11 +6,13 @@ from api.views import (
     EffortRetrieveUpdateDestroyView, EffortListByWeekView, LogoutView,
     EffortCompletionView, HabitPerformanceView, YearlyHabitPerformanceView, RecentCompletionsView,
     SiteConfigView, UserUpdateView, UserListView, TicketListCreateView, TicketRetrieveUpdateDestroyView,
-    AnnouncementListCreateView, AnnouncementRetrieveUpdateDestroyView, TicketCreateView
+    AnnouncementListCreateView, AnnouncementRetrieveUpdateDestroyView, TicketCreateView, UserTicketListView,
+    FeatureListCreateView, FeatureRetrieveUpdateDestroyView, PublicFeatureListView
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/features/', PublicFeatureListView.as_view()),
     path('api/site-config/', SiteConfigView.as_view()),
     path('api/auth/register/', RegisterView.as_view(), name='register'),
     path('api/auth/login/', LoginView.as_view(), name='login'),
@@ -26,10 +28,13 @@ urlpatterns = [
     path('api/performance/<int:habit_id>/', HabitPerformanceView.as_view(), name='performance'),
     path('api/performance/global/', YearlyHabitPerformanceView.as_view(), name='yearly-habit-performance'),
     path('api/user/profile/', UserUpdateView.as_view(), name='user-update'),
+    path('api/tickets/', UserTicketListView.as_view(), name='user-ticket-list'),
+    path('api/tickets/create/', TicketCreateView.as_view(), name='ticket-create'),
     path('api/backoffice/users/', UserListView.as_view(), name='backoffice-user-list'),
     path('api/backoffice/tickets/', TicketListCreateView.as_view(), name='ticket-list-create'),
-    path('api/tickets/create/', TicketCreateView.as_view(), name='ticket-create'),
     path('api/backoffice/tickets/<int:pk>/', TicketRetrieveUpdateDestroyView.as_view(), name='ticket-detail'),
     path('api/backoffice/announcements/', AnnouncementListCreateView.as_view(), name='announcement-list-create'),
     path('api/backoffice/announcements/<int:pk>/', AnnouncementRetrieveUpdateDestroyView.as_view(), name='announcement-detail'),
+    path('api/backoffice/features/', FeatureListCreateView.as_view(), name='feature-list-create'),
+    path('api/backoffice/features/<int:pk>/', FeatureRetrieveUpdateDestroyView.as_view(), name='feature-detail'),
 ]

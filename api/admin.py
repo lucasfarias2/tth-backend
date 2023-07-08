@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Habit, Effort, CustomUser
+from .models import Habit, Effort, CustomUser, Ticket, Announcement, Feature
 
 class CustomUserAdmin(UserAdmin):
     fieldsets = (
@@ -24,3 +24,6 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Habit)
 admin.site.register(Effort)
+admin.site.register(Ticket)
+admin.site.register(Announcement)
+admin.site.register(Feature)
