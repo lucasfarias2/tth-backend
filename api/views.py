@@ -7,9 +7,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from .auth import BearerTokenAuthentication
-from .models import Habit, Effort
-from .serializers import HabitSerializer, EffortSerializer, UserSerializer, UserRegistrationSerializer
+from .models import Habit, Effort, Ticket, Announcement
+from .serializers import HabitSerializer, EffortSerializer, UserSerializer, UserRegistrationSerializer, TicketSerializer, AnnouncementSerializer, UserListSerializer
 
 User = get_user_model()
 
@@ -309,3 +310,55 @@ class UserUpdateView(generics.UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+class UserListView(generics.ListAPIView):
+    serializer_class = UserListSerializer
+    permission_classes = [permissions.IsAdminUser]
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        queryset = User.objects.all().order_by('-date_joined')
+        email = self.request.query_params.get('email')
+        sort = self.request.query_params.get('sort')
+
+        if email:
+            queryset = queryset.filter(email__icontains=email)
+
+        if sort == 'creation_date':
+            queryset = queryset.order_by('date_joined')
+
+        return queryset
+
+class TicketListCreateView(generics.ListCreateAPIView):
+    serializer_class = TicketSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        return Ticket.objects.order_by('-creation_date')
+    
+# required of normal users
+class TicketCreateView(generics.CreateAPIView):
+    serializer_class = TicketSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user.email)
+
+class TicketRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TicketSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    queryset = Ticket.objects.all()
+
+class AnnouncementListCreateView(generics.ListCreateAPIView):
+    serializer_class = AnnouncementSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        return Announcement.objects.all()
+
+class AnnouncementRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = AnnouncementSerializer
+    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
+    queryset = Announcement.objects.all()

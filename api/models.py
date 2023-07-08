@@ -59,3 +59,40 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.email} - {self.first_name} {self.last_name}"
     
+class Ticket(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+    TYPE_CHOICES = [
+        ('email', 'Email'),
+        ('web', 'Web'),
+    ]
+
+    title = models.CharField(max_length=255)
+    content = models.TextField(max_length=1000)
+    sender = models.EmailField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='open')
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    creation_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.title}"
+    
+class Announcement(models.Model):
+    TYPE_CHOICES = [
+        ('alert', 'Alert'),
+        ('info', 'Info'),
+        ('warning', 'Warning'),
+    ]
+
+    title = models.CharField(max_length=255)
+    content = models.TextField(max_length=1000)
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    starting_date = models.DateField()
+    end_date = models.DateField()
+
+    def __str__(self):
+        return f"{self.title}"
