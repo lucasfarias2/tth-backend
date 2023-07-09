@@ -337,14 +337,17 @@ class TicketListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return Ticket.objects.order_by('-creation_date')
-    
+   
 # required of normal users
 class TicketCreateView(generics.CreateAPIView):
     serializer_class = TicketSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]  # Allow any user (authenticated or not) to access this view
 
     def perform_create(self, serializer):
-        serializer.save(sender=self.request.user.email)
+        if self.request.user.is_authenticated:
+            serializer.save(sender=self.request.user.email)
+        else:
+            serializer.save()
 
 class TicketRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TicketSerializer

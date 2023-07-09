@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from .models import Habit, Effort, CustomUser, Ticket, Announcement, Feature
 
 User = get_user_model()
@@ -82,9 +83,14 @@ class TicketSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AnnouncementSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+
     class Meta:
         model = Announcement
-        fields = '__all__'
+        fields = ['id', 'title', 'content', 'type', 'starting_date', 'end_date', 'status']
+    
+    def get_status(self, obj):
+        return 'ON' if obj.end_date > timezone.now().date() else 'OFF'
 
 class FeatureSerializer(serializers.ModelSerializer):
     class Meta:
