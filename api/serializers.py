@@ -44,10 +44,21 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class HabitSerializer(serializers.ModelSerializer):
+    status = serializers.SerializerMethodField()
+
     class Meta:
         model = Habit
         fields = '__all__'
         extra_kwargs = {'user': {'read_only': True}}
+    
+    def get_status(self, obj):
+        if obj.ending_week is None:
+            return 'open'  # Consider 'open' if no ending_week is set
+        current_week = timezone.now().date().isocalendar()[1]
+        if current_week <= obj.ending_week:
+            return 'open'
+        else:
+            return 'finished'
 
 class EffortSerializer(serializers.ModelSerializer):
     habit = serializers.PrimaryKeyRelatedField(queryset=Habit.objects.all())

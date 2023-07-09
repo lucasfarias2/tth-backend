@@ -10,6 +10,7 @@ class Habit(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     color = models.CharField(max_length=255, default="rose")
     year = models.PositiveIntegerField(default=datetime.date.today().year)
+    ending_week = models.PositiveIntegerField(default=None, null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} - From: week {self.starting_week}"
