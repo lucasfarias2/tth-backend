@@ -219,17 +219,17 @@ class YearlyHabitPerformanceView(generics.ListAPIView):
 
     def get(self, request):
         current_week = datetime.date.today().isocalendar()[1]
-        habits = Habit.objects.filter(user=self.request.user)
+        habits = Habit.objects.filter(user=self.request.user, starting_week__lte=current_week)
         habit_performance = []
 
         total_effort_points = 0
         for habit in habits:
-            effort_points = Effort.objects.filter(habit=habit, week__gte=habit.starting_week, week__lte=habit.ending_week).aggregate(Sum('level'))['level__sum'] or 0
+            effort_points = Effort.objects.filter(habit=habit, week__lte=current_week).aggregate(Sum('level'))['level__sum'] or 0
             total_effort_points += effort_points
 
         for habit in habits:
-            habit_effort_points = Effort.objects.filter(habit=habit, week__gte=habit.starting_week, week__lte=habit.ending_week).aggregate(Sum('level'))['level__sum'] or 0
-            weeks_since_start = max(habit.ending_week - habit.starting_week + 1, 1) # Add this max function to ensure weeks_since_start is never 0.
+            habit_effort_points = Effort.objects.filter(habit=habit, week__lte=current_week).aggregate(Sum('level'))['level__sum'] or 0
+            weeks_since_start = current_week - habit.starting_week + 1
             performance_percentage = 0
             if habit.expected_effort > 0:
                 performance_percentage = (habit_effort_points / (habit.expected_effort * weeks_since_start)) * 100
@@ -247,30 +247,23 @@ class YearlyHabitPerformanceView(generics.ListAPIView):
         habit_performance = sorted(habit_performance, key=lambda k: k['contribution_percentage'], reverse=True)
 
         return Response(habit_performance)
-
     
 class RecentCompletionsView(APIView):
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_completion_percentage(self, user, week):
-        # Get the "open" habits for the week
-        habits = Habit.objects.filter(user=user, starting_week__lte=week, ending_week__gte=week)
-        
         # Get the total expected effort for the week
-        total_expected_effort = habits.aggregate(Sum('expected_effort'))['expected_effort__sum'] or 0
+        total_expected_effort = Habit.objects.filter(user=user, starting_week__lte=week).aggregate(Sum('expected_effort'))['expected_effort__sum'] or 0
 
-        # Get the total actual effort for the week, only for the "open" habits
-        total_actual_effort = 0
-        for habit in habits:
-            total_actual_effort += Effort.objects.filter(user=user, week=week, habit=habit).aggregate(Sum('level'))['level__sum'] or 0
+        # Get the total actual effort for the week
+        total_actual_effort = Effort.objects.filter(user=user, week=week).aggregate(Sum('level'))['level__sum'] or 0
 
         # Calculate the completion percentage
         if total_expected_effort > 0:
             return round((total_actual_effort / total_expected_effort) * 100, 2)
         else:
             return 0
-
 
     def get(self, request, *args, **kwargs):
         user = request.user
@@ -344,7 +337,7 @@ class TicketListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return Ticket.objects.order_by('-creation_date')
-    
+   
 # required of normal users
 class TicketCreateView(generics.CreateAPIView):
     serializer_class = TicketSerializer
