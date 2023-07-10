@@ -144,7 +144,10 @@ class EffortCompletionView(APIView):
         week = self.kwargs['week']
         user = request.user
 
-        habits = Habit.objects.filter(user=user, starting_week__lte=week)
+        habits = Habit.objects.filter(user=user,
+                                        starting_week__lte=week,
+                                        ending_week__gte=week # Habits that ended during or after the requested week
+                                    )
 
         total_percentage = 0
 
@@ -169,6 +172,7 @@ class EffortCompletionView(APIView):
             average_completion_percentage = 0
 
         return Response({'completion_percentage': average_completion_percentage})
+
 
 class HabitPerformanceView(generics.ListAPIView):
     serializer_class = EffortSerializer
