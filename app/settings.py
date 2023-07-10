@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'middlewares.exception_logging.ExceptionLoggingMiddleware',
 ]
 
 REST_FRAMEWORK = {
