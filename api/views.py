@@ -10,10 +10,19 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from .auth import BearerTokenAuthentication
 from .models import Habit, Effort, Ticket, Announcement, Feature
-from .serializers import (HabitSerializer, EffortSerializer, UserSerializer,
-                          UserRegistrationSerializer, TicketSerializer, AnnouncementSerializer, UserListSerializer, FeatureSerializer)
+from .serializers import (
+    HabitSerializer,
+    EffortSerializer,
+    UserSerializer,
+    UserRegistrationSerializer,
+    TicketSerializer,
+    AnnouncementSerializer,
+    UserListSerializer,
+    FeatureSerializer,
+)
 
 User = get_user_model()
+
 
 class HabitListCreateView(generics.ListCreateAPIView):
     serializer_class = HabitSerializer
@@ -21,19 +30,22 @@ class HabitListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        year = self.request.query_params.get('year', datetime.date.today().year)
-        week = self.request.query_params.get('week', None)
-        
+        year = self.request.query_params.get("year", datetime.date.today().year)
+        week = self.request.query_params.get("week", None)
+
         query = Q(year=year) & Q(user=self.request.user)
 
         if week is not None:
             week = int(week)
             query &= Q(starting_week__lte=week)
 
-        return Habit.objects.filter(query).order_by('starting_week', F('expected_effort').desc())
+        return Habit.objects.filter(query).order_by(
+            "starting_week", F("expected_effort").desc()
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
 
 class HabitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = HabitSerializer
@@ -42,19 +54,20 @@ class HabitRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
-    
+
+
 class EffortListCreateView(generics.ListCreateAPIView):
     serializer_class = EffortSerializer
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        year = self.request.query_params.get('year', datetime.date.today().year)
+        year = self.request.query_params.get("year", datetime.date.today().year)
         return Effort.objects.filter(Q(year=year) & Q(user=self.request.user))
 
     def create(self, request, *args, **kwargs):
-        habit = request.data.get('habit')
-        week = request.data.get('week')
+        habit = request.data.get("habit")
+        week = request.data.get("week")
 
         if Effort.objects.filter(habit=habit, week=week, user=request.user).exists():
             raise ValidationError("Effort already set for that week and habit.")
@@ -64,6 +77,7 @@ class EffortListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
 class EffortRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = EffortSerializer
     authentication_classes = [BearerTokenAuthentication]
@@ -72,15 +86,19 @@ class EffortRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return Effort.objects.filter(user=self.request.user)
 
+
 class EffortListByWeekView(generics.ListAPIView):
     serializer_class = EffortSerializer
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        week = self.kwargs['week']
-        year = self.request.query_params.get('year', datetime.date.today().year)
-        return Effort.objects.filter(Q(week=week) & Q(year=year) & Q(user=self.request.user))
+        week = self.kwargs["week"]
+        year = self.request.query_params.get("year", datetime.date.today().year)
+        return Effort.objects.filter(
+            Q(week=week) & Q(year=year) & Q(user=self.request.user)
+        )
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -89,11 +107,14 @@ class RegisterView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
-        token, _ = Token.objects.get_or_create(user=User.objects.get(email=request.data['email']))
-        response.data['token'] = token.key
-        response.data['first_name'] = request.data['first_name']
-        response.data['last_name'] = request.data['last_name']
+        token, _ = Token.objects.get_or_create(
+            user=User.objects.get(email=request.data["email"])
+        )
+        response.data["token"] = token.key
+        response.data["first_name"] = request.data["first_name"]
+        response.data["last_name"] = request.data["last_name"]
         return response
+
 
 class LoginView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -106,8 +127,11 @@ class LoginView(APIView):
         if user:
             token, _ = Token.objects.get_or_create(user=user)
             return Response({"token": token.key})
-        
-        return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
 
 class CurrentUserView(APIView):
     authentication_classes = [BearerTokenAuthentication]
@@ -126,8 +150,9 @@ class CurrentUserView(APIView):
             "date_joined": user.date_joined,
             "last_login": user.last_login,
         }
-        
+
         return Response(data)
+
 
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -136,18 +161,26 @@ class LogoutView(APIView):
         request.user.auth_token.delete()
         return Response(status=204)
 
+
 class EffortCompletionView(APIView):
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        week = self.kwargs['week']
+        week = self.kwargs["week"]
         user = request.user
 
-        habits = Habit.objects.filter(user=user,
-                                        starting_week__lte=week,
-                                        ending_week__gte=week # Habits that ended during or after the requested week
-                                    )
+        habits = Habit.objects.filter(
+            user=user,
+            starting_week__lte=week,
+            ending_week__isnull=True,  # Habits that don't have an ending_week
+        ).union(
+            Habit.objects.filter(
+                user=user,
+                starting_week__lte=week,
+                ending_week__gte=week,  # Habits that ended during or after the requested week
+            )
+        )
 
         total_percentage = 0
 
@@ -155,7 +188,12 @@ class EffortCompletionView(APIView):
             expected_effort = habit.expected_effort
 
             # Get the total actual effort for the week for this habit
-            total_actual_effort = Effort.objects.filter(user=user, week=week, habit=habit).aggregate(Sum('level'))['level__sum'] or 0
+            total_actual_effort = (
+                Effort.objects.filter(user=user, week=week, habit=habit).aggregate(
+                    Sum("level")
+                )["level__sum"]
+                or 0
+            )
 
             # Calculate the completion percentage for this habit
             if total_actual_effort >= expected_effort:
@@ -171,7 +209,7 @@ class EffortCompletionView(APIView):
         else:
             average_completion_percentage = 0
 
-        return Response({'completion_percentage': average_completion_percentage})
+        return Response({"completion_percentage": average_completion_percentage})
 
 
 class HabitPerformanceView(generics.ListAPIView):
@@ -180,12 +218,12 @@ class HabitPerformanceView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        habit_id = self.kwargs['habit_id']
+        habit_id = self.kwargs["habit_id"]
         return Effort.objects.filter(habit_id=habit_id, user=self.request.user)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        habit = Habit.objects.get(id=self.kwargs['habit_id'], user=request.user)
+        habit = Habit.objects.get(id=self.kwargs["habit_id"], user=request.user)
 
         performance_data = []
         total_performance_percentage = 0
@@ -201,20 +239,29 @@ class HabitPerformanceView(generics.ListAPIView):
 
             total_performance_percentage += performance_percentage
 
-            performance_data.append({
-                'week': effort.week,
-                'performance_percentage': round(performance_percentage, 2)
-            })
+            performance_data.append(
+                {
+                    "week": effort.week,
+                    "performance_percentage": round(performance_percentage, 2),
+                }
+            )
 
         if queryset.count() > 0:
-            average_performance_percentage = total_performance_percentage / queryset.count()
+            average_performance_percentage = (
+                total_performance_percentage / queryset.count()
+            )
         else:
             average_performance_percentage = 0
 
-        return Response({
-            'performance_data': performance_data, 
-            'average_performance_percentage': round(average_performance_percentage, 2)
-        })
+        return Response(
+            {
+                "performance_data": performance_data,
+                "average_performance_percentage": round(
+                    average_performance_percentage, 2
+                ),
+            }
+        )
+
 
 class YearlyHabitPerformanceView(generics.ListAPIView):
     serializer_class = HabitSerializer
@@ -223,45 +270,82 @@ class YearlyHabitPerformanceView(generics.ListAPIView):
 
     def get(self, request):
         current_week = datetime.date.today().isocalendar()[1]
-        habits = Habit.objects.filter(user=self.request.user, starting_week__lte=current_week)
+        habits = Habit.objects.filter(
+            user=self.request.user, starting_week__lte=current_week
+        )
         habit_performance = []
 
         total_effort_points = 0
         for habit in habits:
-            effort_points = Effort.objects.filter(habit=habit, week__lte=current_week).aggregate(Sum('level'))['level__sum'] or 0
+            ending_week = habit.ending_week if habit.ending_week else current_week
+            ending_week = min(ending_week, current_week)
+
+            effort_points = (
+                Effort.objects.filter(habit=habit, week__lte=ending_week).aggregate(
+                    Sum("level")
+                )["level__sum"]
+                or 0
+            )
             total_effort_points += effort_points
 
         for habit in habits:
-            habit_effort_points = Effort.objects.filter(habit=habit, week__lte=current_week).aggregate(Sum('level'))['level__sum'] or 0
-            weeks_since_start = current_week - habit.starting_week + 1
+            ending_week = habit.ending_week if habit.ending_week else current_week
+            ending_week = min(ending_week, current_week)
+
+            habit_effort_points = (
+                Effort.objects.filter(habit=habit, week__lte=ending_week).aggregate(
+                    Sum("level")
+                )["level__sum"]
+                or 0
+            )
+            weeks_since_start = ending_week - habit.starting_week + 1
             performance_percentage = 0
             if habit.expected_effort > 0:
-                performance_percentage = (habit_effort_points / (habit.expected_effort * weeks_since_start)) * 100
+                performance_percentage = (
+                    habit_effort_points / (habit.expected_effort * weeks_since_start)
+                ) * 100
             contribution_percentage = 0
             if total_effort_points > 0:
-                contribution_percentage = (habit_effort_points / total_effort_points) * 100
+                contribution_percentage = (
+                    habit_effort_points / total_effort_points
+                ) * 100
 
-            habit_performance.append({
-                'habit': HabitSerializer(habit).data,
-                'performance_percentage': round(performance_percentage, 2),
-                'contribution_percentage': round(contribution_percentage, 2),
-            })
+            habit_performance.append(
+                {
+                    "habit": HabitSerializer(habit).data,
+                    "performance_percentage": round(performance_percentage, 2),
+                    "contribution_percentage": round(contribution_percentage, 2),
+                }
+            )
 
         # Sort the habit_performance list by contribution_percentage in descending order
-        habit_performance = sorted(habit_performance, key=lambda k: k['contribution_percentage'], reverse=True)
+        habit_performance = sorted(
+            habit_performance, key=lambda k: k["contribution_percentage"], reverse=True
+        )
 
         return Response(habit_performance)
-    
+
+
 class RecentCompletionsView(APIView):
     authentication_classes = [BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_completion_percentage(self, user, week):
-        # Get the total expected effort for the week
-        total_expected_effort = Habit.objects.filter(user=user, starting_week__lte=week).aggregate(Sum('expected_effort'))['expected_effort__sum'] or 0
+        # Get the total expected effort for the week for habits that started on or before the week
+        total_expected_effort = (
+            Habit.objects.filter(user=user, starting_week__lte=week).aggregate(
+                Sum("expected_effort")
+            )["expected_effort__sum"]
+            or 0
+        )
 
         # Get the total actual effort for the week
-        total_actual_effort = Effort.objects.filter(user=user, week=week).aggregate(Sum('level'))['level__sum'] or 0
+        total_actual_effort = (
+            Effort.objects.filter(user=user, week=week).aggregate(Sum("level"))[
+                "level__sum"
+            ]
+            or 0
+        )
 
         # Calculate the completion percentage
         if total_expected_effort > 0:
@@ -280,17 +364,49 @@ class RecentCompletionsView(APIView):
             completion_percentage = self.get_completion_percentage(user, week)
 
             if i > 0:
-                difference = round(completion_percentage - response[i - 1]['completion_percentage'], 2)
+                difference = round(
+                    completion_percentage - response[i - 1]["completion_percentage"], 2
+                )
             else:
                 difference = 0
 
-            response.append({
-                'week': week,
-                'completion_percentage': completion_percentage,
-                'difference': difference,
-            })
+            response.append(
+                {
+                    "week": week,
+                    "completion_percentage": completion_percentage,
+                    "difference": difference,
+                }
+            )
 
         return Response(response)
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        current_week = datetime.date.today().isocalendar()[1]
+
+        response = []
+
+        # Calculate completion percentages and differences for the current week and the 4 previous weeks
+        for i, week in enumerate(range(current_week - 4, current_week + 1)):
+            completion_percentage = self.get_completion_percentage(user, week)
+
+            if i > 0:
+                difference = round(
+                    completion_percentage - response[i - 1]["completion_percentage"], 2
+                )
+            else:
+                difference = 0
+
+            response.append(
+                {
+                    "week": week,
+                    "completion_percentage": completion_percentage,
+                    "difference": difference,
+                }
+            )
+
+        return Response(response)
+
 
 class SiteConfigView(APIView):
     """
@@ -308,6 +424,7 @@ class SiteConfigView(APIView):
 
         return Response(data)
 
+
 class UserUpdateView(generics.UpdateAPIView):
     serializer_class = UserSerializer
     authentication_classes = [BearerTokenAuthentication]
@@ -316,23 +433,25 @@ class UserUpdateView(generics.UpdateAPIView):
     def get_object(self):
         return self.request.user
 
+
 class UserListView(generics.ListAPIView):
     serializer_class = UserListSerializer
     permission_classes = [permissions.IsAdminUser]
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
-        queryset = User.objects.all().order_by('-date_joined')
-        email = self.request.query_params.get('email')
-        sort = self.request.query_params.get('sort')
+        queryset = User.objects.all().order_by("-date_joined")
+        email = self.request.query_params.get("email")
+        sort = self.request.query_params.get("sort")
 
         if email:
             queryset = queryset.filter(email__icontains=email)
 
-        if sort == 'creation_date':
-            queryset = queryset.order_by('date_joined')
+        if sort == "creation_date":
+            queryset = queryset.order_by("date_joined")
 
         return queryset
+
 
 class TicketListCreateView(generics.ListCreateAPIView):
     serializer_class = TicketSerializer
@@ -340,8 +459,9 @@ class TicketListCreateView(generics.ListCreateAPIView):
     pagination_class = PageNumberPagination
 
     def get_queryset(self):
-        return Ticket.objects.order_by('-creation_date')
-   
+        return Ticket.objects.order_by("-creation_date")
+
+
 # required of normal users
 class TicketCreateView(generics.CreateAPIView):
     serializer_class = TicketSerializer
@@ -350,10 +470,12 @@ class TicketCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user.email)
 
+
 class TicketRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TicketSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = Ticket.objects.all()
+
 
 class AnnouncementListCreateView(generics.ListCreateAPIView):
     serializer_class = AnnouncementSerializer
@@ -363,10 +485,12 @@ class AnnouncementListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Announcement.objects.all()
 
+
 class AnnouncementRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AnnouncementSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = Announcement.objects.all()
+
 
 class FeatureListCreateView(generics.ListCreateAPIView):
     serializer_class = FeatureSerializer
@@ -376,14 +500,18 @@ class FeatureListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Feature.objects.all()
 
+
 class FeatureRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FeatureSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = Feature.objects.all()
 
+
 class UserTicketListView(generics.ListAPIView):
     serializer_class = TicketSerializer
-    permission_classes = [permissions.IsAuthenticated]  # Ensures only authenticated users can access this view
+    permission_classes = [
+        permissions.IsAuthenticated
+    ]  # Ensures only authenticated users can access this view
 
     def get_queryset(self):
         """
@@ -392,7 +520,7 @@ class UserTicketListView(generics.ListAPIView):
         """
         user = self.request.user
         return Ticket.objects.filter(sender=user.email)
-    
+
 
 class PublicFeatureListView(generics.ListAPIView):
     serializer_class = FeatureSerializer
